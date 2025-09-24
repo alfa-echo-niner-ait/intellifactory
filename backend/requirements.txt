@@ -1,6 +1,8 @@
-Flask
-Flask-CORS
+flask
+flask-cors
+sqlalchemy
+psycopg2-binary
 python-dotenv
-SQLAlchemy
-Flask-SQLAlchemy
 requests
+simpy
+flask-migrate
