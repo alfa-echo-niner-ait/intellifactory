@@ -1,4 +1,5 @@
 # backend\src\services\agent_core.py
+
 import json
 from src.utils.api_client import query_model
 from src.models import db, AgentDecision
@@ -11,34 +12,44 @@ ALLOWED_ACTIONS = [
     "reassign_job",
 ]
 
+AGENT_PROMPTS = {
+    "ProductionAgent": """You are a production scheduling agent.
+- Allowed actions: increase_speed, reduce_speed, reassign_job, schedule_maintenance
+- Focus on optimizing throughput, balancing machine load, and meeting order deadlines.
+""",
+    "EnergyAgent": """You are an energy optimization agent.
+- Allowed actions: reduce_speed, schedule_maintenance
+- Focus on minimizing energy costs while keeping production goals intact.
+""",
+    "QualityAgent": """You are a quality control agent.
+- Allowed actions: schedule_maintenance, reduce_speed
+- Focus on preventing quality issues by detecting risks in process parameters.
+""",
+    "MaintenanceAgent": """You are a maintenance planning agent.
+- Allowed actions: schedule_maintenance
+- Focus on scheduling preventive maintenance without disrupting critical orders.
+""",
+    "SupplyChainAgent": """You are a supply chain agent.
+- Allowed actions: reassign_job
+- Focus on managing order allocation and ensuring materials are available.
+""",
+}
 
-def run_production_agent(factory_state: dict):
-    prompt = (
-        "ProductionAgent: Analyze factory state for production optimization.\n"
-        f"{json.dumps(factory_state)}\n"
-    )
-    return _run_agent(prompt, "ProductionAgent")
 
+def run_agent(agent_name: str, factory_state: dict):
+    system_prompt = AGENT_PROMPTS.get(agent_name, "")
+    prompt = f"{agent_name}: Analyze factory state.\n{json.dumps(factory_state)}\n"
 
-def run_energy_agent(factory_state: dict):
-    prompt = (
-        "EnergyAgent: Analyze energy usage and suggest cost-saving strategies.\n"
-        f"{json.dumps(factory_state)}\n"
-    )
-    return _run_agent(prompt, "EnergyAgent")
-
-
-def _run_agent(prompt: str, agent_name: str):
-    raw = query_model(prompt)
+    raw = query_model(prompt, agent_system_prompt=system_prompt)
     decision = _validate_and_parse(raw, agent_name)
+
     save_decision(agent_name, json.dumps(decision))
+
     return decision
 
 
 def _validate_and_parse(raw: str, agent_name: str):
     try:
-        print(f"{agent_name} raw response:", raw)
-
         if isinstance(raw, dict):
             res_data = raw
         else:
@@ -85,5 +96,10 @@ def save_decision(agent_name, decision_json):
         impact="parsed",
         created_at=datetime.utcnow(),
     )
-    db.session.add(d)
-    db.session.commit()
+    try:
+        db.session.add(d)
+        db.session.commit()
+        print(f"[>] Saved decision for {agent_name}")
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error saving decision: {e}")

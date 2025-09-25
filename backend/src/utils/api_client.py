@@ -1,6 +1,5 @@
 # backend\src\utils\api_client.py
 
-import requests
 import json
 from src import Config
 from openai import OpenAI
@@ -10,13 +9,8 @@ API_KEY = Config.MODEL_API_KEY
 MODEL = Config.MODEL
 
 
-def query_model(prompt: str):
-    print(
-        "Querying model with prompt:",
-        prompt[:200] + "..." if len(prompt) > 200 else prompt,
-    )
-
-    SYSTEM_PROMPT = """You are a factory optimization agent. You must respond with ONLY valid JSON, no other text.
+def query_model(prompt, agent_system_prompt):
+    SYSTEM_PROMPT = """You must respond with ONLY valid JSON, no other text.
 
         CRITICAL RULES:
         1. Output ONLY the JSON object, no explanations, no thinking
@@ -32,11 +26,12 @@ def query_model(prompt: str):
         }
         }
         3. If no actions needed, use empty array: "actions": []
-        4. Allowed actions: increase_speed, reduce_speed, schedule_maintenance, reassign_job
-        5. Keep notes brief (1 sentence)
-        6. Be straiforward and concise, no extra thinking steps
+        4. Keep notes brief (1 sentence)
+        5. Be straiforward and concise, no extra thinking steps
 
         IMPORTANT: Your response must start with { and end with } - no other text!"""
+    
+    SYSTEM_PROMPT = agent_system_prompt + "\n" + SYSTEM_PROMPT
 
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -55,7 +50,6 @@ def query_model(prompt: str):
         )
 
         result = response.choices[0].message.content.strip() # Remoeve leading/trailing whitespace
-        print("Model raw response:", repr(result))
 
         # JSON extraction
         cleaned_result = extract_json(response_text=result)
@@ -83,6 +77,7 @@ def query_model(prompt: str):
                 "notes": f"API error: {str(e)}",
             },
         }
+
 
 def extract_json(response_text):
     # Try to extract JSON from response

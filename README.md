@@ -13,20 +13,11 @@ Absolutely—that’s the best approach. Let’s **separate migrations and seedi
 
 ### Steps to run migrations and seed**
 
-1. **Initialize & migrate**
+**Seed dummy data (only first time):**
 
-   ```bash
-   export FLASK_APP=app.py
-   flask db init         # only once
-   flask db migrate -m "Initial tables"
-   flask db upgrade
-   ```
-
-2. **Seed dummy data (only when needed)**
-
-   ```bash
-   python seed_db.py
-   ```
+```bash
+python seed_db.py
+```
 
 ### Routes check
 
@@ -34,4 +25,37 @@ Absolutely—that’s the best approach. Let’s **separate migrations and seedi
 
 `http://localhost:5000/api/orders`
 
-`http://localhost:5000/api/agents/run`
+### API check
+
+```bash
+curl --proxy "" -X POST http://127.0.0.1:5000/api/agents/quality
+```
+
+**Result example:**
+
+```json
+{
+  "actions": [
+    {
+      "action": "schedule_maintenance",
+      "machine_id": 1,
+      "value": " preventive maintenance"
+    },
+    {
+      "action": "schedule_maintenance",
+      "machine_id": 3,
+      "value": " preventive maintenance"
+    },
+    {
+      "action": "reduce_speed",
+      "machine_id": 2,
+      "value": " to reduce idle time"
+    }
+  ],
+  "impact": {
+    "energy_change_percent": "Possible increase in energy usage due to high utilization",
+    "notes": "Preventive maintenance on high utilization machines and reducing idle time on the milling machine to optimize energy usage and throughput.",
+    "throughput_change_percent": "Potential decrease in throughput due to idle time"
+  }
+}
+```

@@ -1,3 +1,5 @@
+# backend\src\utils\build_prompt.py
+
 from src.models import Machine, Order, EnergyPrice
 
 def build_factory_state():
@@ -32,5 +34,5 @@ def build_factory_state():
         "machines": machines,
         "orders": orders,
         "energy_prices": prices,
-        "context": "Demo run",
+        "context": "Optimization run",
     }
