@@ -1,5 +1,9 @@
-import os, requests, json
+# backend\src\utils\api_client.py
+
+import requests
+import json
 from src import Config
+from openai import OpenAI
 
 BASE_URL = Config.MODEL_BASE_URL
 API_KEY = Config.MODEL_API_KEY
@@ -7,30 +11,90 @@ MODEL = Config.MODEL
 
 
 def query_model(prompt: str):
-    url = f"{BASE_URL}/chat/completions"
-    headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
-    payload = {
-        "model": MODEL,
-        "messages": [
-            {
-                "role": "system",
-                "content": "You are an expert factory optimization agent. Reply ONLY with JSON.",
-            },
-            {"role": "user", "content": prompt},
+    print(
+        "Querying model with prompt:",
+        prompt[:200] + "..." if len(prompt) > 200 else prompt,
+    )
+
+    SYSTEM_PROMPT = """You are a factory optimization agent. You must respond with ONLY valid JSON, no other text.
+
+        CRITICAL RULES:
+        1. Output ONLY the JSON object, no explanations, no thinking
+        2. Use this exact ouput format:
+        {
+        "actions": [
+            {"machine_id": number, "action": "action_type", "value": number}
         ],
-        "max_tokens": 1024,
-        "temperature": 0.3,
-        "response_format": {"type": "json_object"},
-        "stream": False,
-    }
+        "impact": {
+            "throughput_change_percent": number,
+            "energy_change_percent": number,
+            "notes": "Brief explanation"
+        }
+        }
+        3. If no actions needed, use empty array: "actions": []
+        4. Allowed actions: increase_speed, reduce_speed, schedule_maintenance, reassign_job
+        5. Keep notes brief (1 sentence)
+        6. Be straiforward and concise, no extra thinking steps
+
+        IMPORTANT: Your response must start with { and end with } - no other text!"""
+
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": prompt},
+    ]
+
+    client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
 
     try:
-        resp = requests.post(url, headers=headers, data=json.dumps(payload), timeout=30)
-        resp.raise_for_status()
-        data = resp.json()
-        # Parse content safely
-        return data.get("choices", [{}])[0].get("message", {}).get("content", "")
-    except requests.exceptions.ReadTimeout:
-        return "Error querying model: Request timed out"
+        response = client.chat.completions.create(
+            model=MODEL,
+            messages=messages,
+            # max_tokens=4096,
+            temperature=0.1,  # Very low temperature for consistent formatting
+            stream=False,
+        )
+
+        result = response.choices[0].message.content.strip() # Remoeve leading/trailing whitespace
+        print("Model raw response:", repr(result))
+
+        # JSON extraction
+        cleaned_result = extract_json(response_text=result)
+
+        if not cleaned_result:
+            return {
+                "actions": [],
+                "impact": {
+                    "throughput_change_percent": 0,
+                    "energy_change_percent": 0,
+                    "notes": "No valid JSON found in response",
+                },
+            }
+
+        parsed_data = json.loads(cleaned_result)
+        return parsed_data
+
     except Exception as e:
-        return f"Error querying model: {e}"
+        print(f"API call error: {e}")
+        return {
+            "actions": [],
+            "impact": {
+                "throughput_change_percent": 0,
+                "energy_change_percent": 0,
+                "notes": f"API error: {str(e)}",
+            },
+        }
+
+def extract_json(response_text):
+    # Try to extract JSON from response
+    try:
+        # If the model wraps JSON in code blocks
+        if "```json" in response_text:
+            response_text = response_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in response_text:
+            response_text = response_text.split("```")[1].split("```")[0].strip()
+
+        return response_text
+
+    except json.JSONDecodeError as e:
+        print(f"JSON decoding error: {e}")
+        return (f"JSON decoding error: {e}", None)

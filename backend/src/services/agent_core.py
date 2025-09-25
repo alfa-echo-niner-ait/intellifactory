@@ -1,3 +1,4 @@
+# backend\src\services\agent_core.py
 import json
 from src.utils.api_client import query_model
 from src.models import db, AgentDecision
@@ -10,25 +11,11 @@ ALLOWED_ACTIONS = [
     "reassign_job",
 ]
 
-PROMPT_SUFFIX = (
-    "You are a specialized factory agent. "
-    "ONLY respond in **valid JSON** matching:\n"
-    "{\n"
-    '  "actions": [{"machine_id": int, "action": string, "value": number}],\n'
-    '  "impact": {"throughput_change_percent": number, "energy_change_percent": number, "notes": string}\n'
-    "}\n"
-    f"- Allowed machine status values: idle, running, maintenance.\n"
-    f"- Allowed actions: {ALLOWED_ACTIONS}.\n"
-    "Do NOT include explanations or extra text outside JSON.\n"
-    "If you cannot decide, return empty actions with impact notes."
-)
-
 
 def run_production_agent(factory_state: dict):
     prompt = (
         "ProductionAgent: Analyze factory state for production optimization.\n"
         f"{json.dumps(factory_state)}\n"
-        f"{PROMPT_SUFFIX}"
     )
     return _run_agent(prompt, "ProductionAgent")
 
@@ -37,7 +24,6 @@ def run_energy_agent(factory_state: dict):
     prompt = (
         "EnergyAgent: Analyze energy usage and suggest cost-saving strategies.\n"
         f"{json.dumps(factory_state)}\n"
-        f"{PROMPT_SUFFIX}"
     )
     return _run_agent(prompt, "EnergyAgent")
 
@@ -51,29 +37,51 @@ def _run_agent(prompt: str, agent_name: str):
 
 def _validate_and_parse(raw: str, agent_name: str):
     try:
-        data = json.loads(raw)
+        print(f"{agent_name} raw response:", raw)
+
+        if isinstance(raw, dict):
+            res_data = raw
+        else:
+            res_data = json.loads(raw)
+
         # Basic checks
-        if "actions" not in data or "impact" not in data:
+        if "actions" not in res_data or "impact" not in res_data:
             raise ValueError("Missing keys.")
-        for a in data["actions"]:
+        for a in res_data["actions"]:
             if a.get("action") not in ALLOWED_ACTIONS:
                 raise ValueError(f"Invalid action {a.get('action')}")
-        return data
+        return res_data
     except Exception as e:
+        # Handle both string and dict raw responses
+        if isinstance(raw, dict):
+            raw_response = raw
+        else:
+            try:
+                raw_response = json.loads(raw)
+            except:
+                raw_response = {"raw_string": raw}
+
         return {
             "actions": [],
             "impact": {
                 "throughput_change_percent": 0,
                 "energy_change_percent": 0,
-                "notes": f"{agent_name} returned invalid JSON: {e}. Raw: {raw}",
+                "notes": f"{agent_name} returned invalid JSON: {e}",
             },
+            "raw_response": raw_response,
         }
 
 
 def save_decision(agent_name, decision_json):
+    # Convert dict to string if necessary
+    if isinstance(decision_json, dict):
+        decision_str = json.dumps(decision_json)
+    else:
+        decision_str = decision_json
+
     d = AgentDecision(
         agent_name=agent_name,
-        decision=decision_json,
+        decision=decision_str,
         impact="parsed",
         created_at=datetime.utcnow(),
     )

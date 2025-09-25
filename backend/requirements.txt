@@ -6,3 +6,4 @@ python-dotenv
 requests
 simpy
 flask-migrate
+openai
