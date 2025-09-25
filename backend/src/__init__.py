@@ -12,14 +12,15 @@ def create_app():
     db.init_app(app)
     Migrate(app, db)
     CORS(app)
-    
+
     # Register blueprints
-    from src.blueprints.dashboard import dashboard_bp
     from src.blueprints.agents import agents_bp
+    from src.blueprints.data import data_bp
+    from src.blueprints.events import events_bp
 
-    app.register_blueprint(dashboard_bp)
     app.register_blueprint(agents_bp)
-
+    app.register_blueprint(data_bp)
+    app.register_blueprint(events_bp)
 
     return app
 

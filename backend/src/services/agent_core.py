@@ -3,6 +3,7 @@
 import json
 from src.utils.api_client import query_model
 from src.models import db, AgentDecision
+from src.blueprints.events import push_event
 from datetime import datetime
 
 ALLOWED_ACTIONS = [
@@ -100,6 +101,16 @@ def save_decision(agent_name, decision_json):
         db.session.add(d)
         db.session.commit()
         print(f"[>] Saved decision for {agent_name}")
+
+        # Notify via SSE
+        push_event(
+            "decision",
+            {
+                "agent": agent_name,
+                "decision": json.loads(decision_str),
+                "created_at": d.created_at.isoformat(),
+            },
+        )
     except Exception as e:
         db.session.rollback()
         print(f"Error saving decision: {e}")

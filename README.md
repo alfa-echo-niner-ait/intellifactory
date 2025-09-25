@@ -21,9 +21,13 @@ python seed_db.py
 
 ### Routes check
 
-`http://localhost:5000/api/machines`
+`http://localhost:5000/api/data/machines`
 
-`http://localhost:5000/api/orders`
+`http://localhost:5000/api/data/orders`
+
+`http://localhost:5000/api/data/energy`
+
+`http://localhost:5000/api/data/decisions`
 
 ### API check
 
