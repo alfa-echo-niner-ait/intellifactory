@@ -1,8 +1,10 @@
+import Header from "../components/layout/Header";
 import FactoryScene from "../components/twin/FactoryScene";
-import MachineList from "@/components/dashboard/MachineList";
+import MachineList from "../components/dashboard/MachineList";
 import OrdersTable from "../components/dashboard/OrdersTable";
 import EnergyChart from "../components/dashboard/EnergyChart";
 import DecisionLog from "../components/dashboard/DecisionLog";
+import ControlPanel from "../components/dashboard/ControlPanel";
 import { useFactoryData } from "../hooks/useFactoryData";
 
 export default function Dashboard() {
@@ -12,13 +14,17 @@ export default function Dashboard() {
 
 	return (
 		<div className="flex h-screen">
-			{/* Left: 3D Twin */}
-			<div className="flex-1 bg-gray-100">
-				<FactoryScene machines={machines} />
+			{/* Left: Factory */}
+			<div className="flex-1 bg-gray-100 flex flex-col">
+				<Header machines={machines} orders={orders} energy={energy} />
+				<div className="flex-1">
+					<FactoryScene machines={machines} />
+				</div>
 			</div>
 
-			{/* Right: Dashboard panels */}
-			<div className="w-[400px] bg-white border-l p-4 space-y-4 overflow-y-auto">
+			{/* Right: Dashboard */}
+			<div className="w-[500px] bg-gray-50 border-l p-4 space-y-4 overflow-y-auto">
+				<ControlPanel />
 				<MachineList machines={machines} />
 				<OrdersTable orders={orders} />
 				<EnergyChart energy={energy} />

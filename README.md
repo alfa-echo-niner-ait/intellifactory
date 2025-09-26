@@ -35,6 +35,10 @@ python seed_db.py
 curl --proxy "" -X POST http://127.0.0.1:5000/api/agents/quality
 ```
 
+```bash
+curl --proxy "" -X POST http://127.0.0.1:5000/api/agents/run_all
+```
+
 **Result example:**
 
 ```json
