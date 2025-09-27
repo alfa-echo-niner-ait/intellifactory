@@ -9,6 +9,7 @@ agents_bp = Blueprint("agents", __name__, url_prefix="/api/agents")
 @agents_bp.route("/production", methods=["POST"])
 def run_production():
     state = build_factory_state()
+    print("[>] Running Production Agent")
     result = run_agent("ProductionAgent", state)
     updates = apply_actions(result.get("actions", []))
     return jsonify({"agent": "ProductionAgent", "decision": result, "updates": updates})

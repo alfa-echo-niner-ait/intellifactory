@@ -1,9 +1,11 @@
+// frontend\src\lib\sse.ts
+
 export function subscribeToEvents(onEvent: (event: MessageEvent) => void) {
 	const evtSource = new EventSource("http://localhost:5000/api/events/stream");
 
+	// default (unnamed events, not used here but keep for safety)
 	evtSource.onmessage = (e) => {
 		console.log("Generic event:", e.data);
-		onEvent(e);
 	};
 
 	evtSource.addEventListener("decision", (e) => {

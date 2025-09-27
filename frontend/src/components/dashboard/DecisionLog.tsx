@@ -86,7 +86,7 @@ export default function DecisionLog({ decisions }: { decisions: AgentDecision[] 
 												</div>
 											</div>
 										) : (
-											<pre className="bg-slate-100 text-xs p-2 rounded-md overflow-x-auto">{d.decision}</pre>
+											<pre className="bg-slate-100 text-xs p-2 rounded-md overflow-x-auto">{typeof d.decision === 'string' ? d.decision : JSON.stringify(d.decision, null, 2)}</pre>
 										)}
 									</div>
 								</div>

@@ -1,3 +1,5 @@
+// frontend\src\lib\types.ts
+
 // Machine entity
 export interface Machine {
 	id: number;
@@ -26,16 +28,18 @@ export interface EnergyPrice {
 export interface AgentDecision {
 	id: number;
 	agent: string;
-	decision: string; // JSON string from backend
+	decision: string; // JSON string stored in DB
 	created_at: string;
 }
+
 
 // SSE event payloads
 export interface DecisionEvent {
 	agent: string;
-	decision: string; // JSON string from backend, same as AgentDecision.decision
+	decision: Record<string, unknown>; // actual JSON object from SSE
 	created_at: string;
 }
+
 
 export interface StateUpdateEvent {
 	machine_id: number;

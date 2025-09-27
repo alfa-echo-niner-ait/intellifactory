@@ -8,8 +8,19 @@ def apply_actions(actions: list):
     """Apply agent actions to machines/orders and persist to DB."""
     updates = []
     for action in actions:
-        machine = Machine.query.get(action.get("machine_id"))
+        # Coerce machine_id to int when possible so string IDs from agents still match DB ids
+        raw_mid = action.get("machine_id")
+        machine = None
+        if raw_mid is not None:
+            try:
+                mid = int(raw_mid)
+            except Exception:
+                mid = raw_mid
+            machine = Machine.query.get(mid)
+        else:
+            machine = None
         if not machine:
+            print(f"[!] apply_actions: no machine found for action {action}. (machine_id={raw_mid})")
             continue
 
         act = action.get("action")
@@ -47,6 +58,10 @@ def apply_actions(actions: list):
 
     db.session.commit()
     # Broadcast state update
+    if len(updates) == 0:
+        print(f"[!] apply_actions: no updates produced from actions: {actions}")
+    else:
+        print(f"[>] Broadcasting state update: {updates}")
     push_event("state_update", updates)
     
     return updates

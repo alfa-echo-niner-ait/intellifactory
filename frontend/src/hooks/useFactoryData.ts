@@ -1,3 +1,5 @@
+// frontend\src\hooks\useFactoryData.ts
+
 import { useEffect, useState } from "react";
 import { getMachines, getOrders, getEnergy, getDecisions } from "../lib/api";
 import type {
@@ -46,16 +48,24 @@ export function useFactoryData() {
 		const evtSource = subscribeToEvents((event: MessageEvent) => {
 			if (event.type === "decision") {
 				const data: DecisionEvent = JSON.parse(event.data);
+				// normalize decision to a JSON string so components that expect a string
+				// (from initial fetch) don't receive a raw object from SSE
+				const decisionString =
+					typeof data.decision === "string"
+						? data.decision
+						: JSON.stringify(data.decision);
+
 				setDecisions((prev) => [
 					{
 						id: Date.now(),
 						agent: data.agent,
-						decision: JSON.stringify(data.decision),
+						decision: decisionString,
 						created_at: data.created_at,
 					},
 					...prev,
 				]);
 			}
+
 
 			if (event.type === "state_update") {
 				const data: StateUpdateEvent[] = JSON.parse(event.data);
