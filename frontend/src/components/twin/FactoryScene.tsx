@@ -4,6 +4,12 @@ import Machine3D from "./Machine3D";
 import type { Machine } from "../../lib/types";
 import { useEffect } from "react";
 
+type Props = {
+	machines: Machine[];
+	onSelectMachine?: (id: number) => void;
+	selectedMachineId?: number | null;
+};
+
 const CameraController: React.FC = () => {
 	const { camera } = useThree();
 
@@ -15,7 +21,7 @@ const CameraController: React.FC = () => {
 	return null;
 };
 
-export default function FactoryScene({ machines }: { machines: Machine[] }) {
+export default function FactoryScene({ machines, onSelectMachine, selectedMachineId }: Props) {
 	return (
 		<Canvas shadows camera={{ position: [5, 5, 10], fov: 50 }}>
 			<CameraController />
@@ -48,7 +54,13 @@ export default function FactoryScene({ machines }: { machines: Machine[] }) {
 
 			{/* Machines */}
 			{machines.map((m, idx) => (
-				<Machine3D key={m.id} machine={m} position={[idx * 3 - 5, 0, 0]} />
+				<Machine3D
+					key={m.id}
+					machine={m}
+					position={[idx * 3 - (machines.length - 1) * 1.5, 0, 0]}
+					onClick={() => onSelectMachine && onSelectMachine(m.id)}
+					selected={selectedMachineId === m.id}
+				/>
 			))}
 
 			<OrbitControls />

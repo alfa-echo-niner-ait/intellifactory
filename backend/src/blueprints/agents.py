@@ -2,6 +2,8 @@ from flask import Blueprint, jsonify
 from src.services.agent_core import run_agent
 from src.services.simulation import apply_actions
 from src.utils.build_state import build_factory_state
+from flask import request
+from src.blueprints.events import push_event
 
 agents_bp = Blueprint("agents", __name__, url_prefix="/api/agents")
 
@@ -49,6 +51,29 @@ def run_supply():
     return jsonify(
         {"agent": "SupplyChainAgent", "decision": result, "updates": updates}
     )
+
+
+# New: request agent suggestions without applying them
+@agents_bp.route("/suggest/<agent_name>", methods=["POST"])
+def suggest_agent(agent_name):
+    state = build_factory_state()
+    result = run_agent(agent_name, state)
+    # don't apply actions, just return the suggested actions
+    return jsonify({"agent": agent_name, "decision": result})
+
+
+# New: apply a list of actions (POST from frontend after user accepts suggestions)
+@agents_bp.route("/apply_actions", methods=["POST"])
+def apply_actions_endpoint():
+    payload = request.get_json() or {}
+    actions = payload.get("actions", [])
+    updates = apply_actions(actions)
+
+    # broadcast updates
+    for u in updates:
+        push_event("machine_update", u)
+
+    return jsonify({"updates": updates})
 
 
 # Combined endpoint to run all agents and apply their actions

@@ -10,32 +10,39 @@ function ActionButton({
 	onClick,
 	loading,
 	variant = "secondary",
+	disabled = false,
 }: {
 	label: string;
 	icon: React.ReactElement;
 	onClick: () => Promise<void> | void;
 	loading?: boolean;
 	variant?: "primary" | "secondary";
+	disabled?: boolean;
 }) {
-	const primary =
-		"inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
+	const base =
+		"inline-flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-colors";
 	const primaryStyle =
 		"bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500";
 	const secondaryStyle =
-		"bg-slate-50 text-slate-800 hover:bg-slate-100 ring-1 ring-slate-100";
+		"bg-white text-slate-700 hover:bg-slate-50 ring-1 ring-slate-100";
+
+	const applied = `${base} ${variant === "primary" ? primaryStyle : secondaryStyle} ${disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`;
 
 	return (
 		<button
 			onClick={onClick}
-			disabled={!!loading}
-			className={`${primary} ${variant === "primary" ? primaryStyle : secondaryStyle}`}
+			disabled={disabled || !!loading}
+			className={applied}
 			aria-busy={loading ? "true" : "false"}
 		>
-			<span className={`${loading ? "opacity-0" : "opacity-100"}`}>{icon}</span>
-			{loading ? (
-				<RefreshCw className="animate-spin" size={16} />
-			) : null}
-			<span>{label}</span>
+			{/* fixed icon slot to prevent layout shift */}
+			<span className="relative inline-flex h-5 w-5 items-center justify-center">
+				<span className={`${loading ? "opacity-0" : "opacity-100"}`}>{icon}</span>
+				{loading ? (
+					<RefreshCw className="absolute animate-spin text-slate-500" size={16} />
+				) : null}
+			</span>
+			<span className="truncate">{label}</span>
 		</button>
 	);
 }
@@ -44,18 +51,24 @@ export default function ControlPanel() {
 	const [loadingAgent, setLoadingAgent] = useState<string | null>(null);
 
 	async function handleRunAll() {
+		if (loadingAgent) return; // prevent double-invoke
 		try {
 			setLoadingAgent("all");
 			await runAllAgents();
+		} catch (err) {
+			console.error("runAllAgents failed", err);
 		} finally {
 			setLoadingAgent(null);
 		}
 	}
 
 	async function handleRun(agent: AgentKey) {
+		if (loadingAgent) return; // prevent double-invoke
 		try {
 			setLoadingAgent(agent);
 			await runAgent(agent);
+		} catch (err) {
+			console.error(`runAgent ${agent} failed`, err);
 		} finally {
 			setLoadingAgent(null);
 		}
@@ -70,11 +83,12 @@ export default function ControlPanel() {
 				</div>
 				<div className="hidden sm:flex items-center gap-2">
 					<ActionButton
-						label="All"
+						label="Run All"
 						icon={<Play size={16} className="text-white" />}
 						onClick={handleRunAll}
 						loading={loadingAgent === "all"}
 						variant="primary"
+						disabled={!!loadingAgent}
 					/>
 				</div>
 			</div>
@@ -86,6 +100,7 @@ export default function ControlPanel() {
 					onClick={() => handleRun("production")}
 					loading={loadingAgent === "production"}
 					variant="secondary"
+					disabled={loadingAgent !== null && loadingAgent !== "production"}
 				/>
 
 				<ActionButton
@@ -93,6 +108,7 @@ export default function ControlPanel() {
 					icon={<Zap size={16} className="text-amber-600" />}
 					onClick={() => handleRun("energy")}
 					loading={loadingAgent === "energy"}
+					disabled={loadingAgent !== null && loadingAgent !== "energy"}
 				/>
 
 				<ActionButton
@@ -100,6 +116,7 @@ export default function ControlPanel() {
 					icon={<Wrench size={16} className="text-sky-600" />}
 					onClick={() => handleRun("quality")}
 					loading={loadingAgent === "quality"}
+					disabled={loadingAgent !== null && loadingAgent !== "quality"}
 				/>
 
 				<ActionButton
@@ -107,6 +124,7 @@ export default function ControlPanel() {
 					icon={<Truck size={16} className="text-emerald-600" />}
 					onClick={() => handleRun("maintenance")}
 					loading={loadingAgent === "maintenance"}
+					disabled={loadingAgent !== null && loadingAgent !== "maintenance"}
 				/>
 
 				<ActionButton
@@ -114,6 +132,7 @@ export default function ControlPanel() {
 					icon={<Package size={16} className="text-violet-600" />}
 					onClick={() => handleRun("supply")}
 					loading={loadingAgent === "supply"}
+					disabled={loadingAgent !== null && loadingAgent !== "supply"}
 				/>
 
 				{/* Small visible Run All for mobile */}
@@ -124,6 +143,7 @@ export default function ControlPanel() {
 						onClick={handleRunAll}
 						loading={loadingAgent === "all"}
 						variant="primary"
+						disabled={!!loadingAgent}
 					/>
 				</div>
 			</div>

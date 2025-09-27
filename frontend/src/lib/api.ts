@@ -27,6 +27,12 @@ export async function getDecisions(): Promise<AgentDecision[]> {
 	return res.data;
 }
 
+// update a machine record (PUT)
+export async function updateMachine(machineId: number, payload: Partial<Machine>) {
+    const res = await api.put(`/data/machines/${machineId}`, payload);
+    return res.data as Machine;
+}
+
 // ---- Agents ----
 export async function runAllAgents() {
 	const res = await api.post("/agents/run_all");
@@ -35,5 +41,17 @@ export async function runAllAgents() {
 
 export async function runAgent(agent: string) {
 	const res = await api.post(`/agents/${agent}`);
+	return res.data;
+}
+
+// request suggested actions from an agent without applying them
+export async function suggestAgent(agentName: string) {
+	const res = await api.post(`/agents/suggest/${agentName}`);
+	return res.data;
+}
+
+// apply a list of actions (usually approved by user)
+export async function applyActions(actions: unknown[]) {
+	const res = await api.post(`/agents/apply_actions`, { actions });
 	return res.data;
 }
