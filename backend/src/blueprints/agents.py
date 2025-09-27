@@ -1,5 +1,3 @@
-# backend\src\blueprints\agents.py
-
 from flask import Blueprint, jsonify
 from src.services.agent_core import run_agent
 from src.services.simulation import apply_actions
@@ -11,31 +9,45 @@ agents_bp = Blueprint("agents", __name__, url_prefix="/api/agents")
 @agents_bp.route("/production", methods=["POST"])
 def run_production():
     state = build_factory_state()
-    return jsonify(run_agent("ProductionAgent", state))
+    result = run_agent("ProductionAgent", state)
+    updates = apply_actions(result.get("actions", []))
+    return jsonify({"agent": "ProductionAgent", "decision": result, "updates": updates})
 
 
 @agents_bp.route("/energy", methods=["POST"])
 def run_energy():
     state = build_factory_state()
-    return jsonify(run_agent("EnergyAgent", state))
+    result = run_agent("EnergyAgent", state)
+    updates = apply_actions(result.get("actions", []))
+    return jsonify({"agent": "EnergyAgent", "decision": result, "updates": updates})
 
 
 @agents_bp.route("/quality", methods=["POST"])
 def run_quality():
     state = build_factory_state()
-    return jsonify(run_agent("QualityAgent", state))
+    result = run_agent("QualityAgent", state)
+    updates = apply_actions(result.get("actions", []))
+    return jsonify({"agent": "QualityAgent", "decision": result, "updates": updates})
 
 
 @agents_bp.route("/maintenance", methods=["POST"])
 def run_maintenance():
     state = build_factory_state()
-    return jsonify(run_agent("MaintenanceAgent", state))
+    result = run_agent("MaintenanceAgent", state)
+    updates = apply_actions(result.get("actions", []))
+    return jsonify(
+        {"agent": "MaintenanceAgent", "decision": result, "updates": updates}
+    )
 
 
 @agents_bp.route("/supply", methods=["POST"])
 def run_supply():
     state = build_factory_state()
-    return jsonify(run_agent("SupplyChainAgent", state))
+    result = run_agent("SupplyChainAgent", state)
+    updates = apply_actions(result.get("actions", []))
+    return jsonify(
+        {"agent": "SupplyChainAgent", "decision": result, "updates": updates}
+    )
 
 
 # Combined endpoint to run all agents and apply their actions
@@ -50,7 +62,7 @@ def run_all():
         "supply_agent": run_agent("SupplyChainAgent", state),
     }
 
-    # Apply actions
+    # Apply actions from all agents
     updates = []
     for res in results.values():
         updates += apply_actions(res.get("actions", []))

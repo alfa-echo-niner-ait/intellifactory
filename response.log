@@ -1,0 +1,106 @@
+C:\Users\maaem>curl --proxy "" -X POST http://127.0.0.1:5000/api/agents/run_all
+{
+  "agents": {
+    "energy_agent": {
+      "actions": [],
+      "impact": {
+        "energy_change_percent": 0,
+        "notes": "No actions needed as the Milling Machine is idle and energy prices are stable.",
+        "throughput_change_percent": 0
+      }
+    },
+    "maintenance_agent": {
+      "actions": [
+        {
+          "action": "schedule_maintenance",
+          "machine_id": 2,
+          "value": "2025-09-25T17:41:34.606067"
+        }
+      ],
+      "impact": {
+        "energy_change_percent": -20,
+        "notes": "Scheduling maintenance for the Milling Machine during a low energy price period to reduce energy usage and costs.",
+        "throughput_change_percent": 0
+      }
+    },
+    "production_agent": {
+      "actions": [
+        {
+          "action": "reassign_job",
+          "machine_id": 4,
+          "value": 2
+        }
+      ],
+      "impact": {
+        "energy_change_percent": 0,
+        "notes": "Reassigning maintenance from Machine 4 to Machine 2 to reduce idle time and meet order deadlines.",
+        "throughput_change_percent": 10
+      }
+    },
+    "quality_agent": {
+      "actions": [
+        {
+          "action": "schedule_maintenance",
+          "machine_id": 1,
+          "value": " preventive maintenance to ensure optimal performance and reduce downtime."
+        },
+        {
+          "action": "reduce_speed",
+          "machine_id": 2,
+          "value": " optimizing energy usage and increasing throughput by adjusting machine speed"
+        }
+      ],
+      "impact": {
+        "energy_change_percent": -0.3,
+        "notes": "Scheduling maintenance on the CNC Lathe and reducing the speed of the milling machine are expected to improve throughput by 0.5% and reduce energy consumption by 0.3%.",
+        "throughput_change_percent": 0.5
+      }
+    },
+    "supply_agent": {
+      "actions": [],
+      "impact": {
+        "energy_change_percent": 0,
+        "notes": "API error: Expecting value: line 1 column 1 (char 0)",
+        "throughput_change_percent": 0
+      }
+    }
+  },
+  "updates": [
+    {
+      "machine_id": 4,
+      "new_status": "maintenance",
+      "new_utilization": 0.0
+    },
+    {
+      "machine_id": 1,
+      "new_status": "maintenance",
+      "new_utilization": 75.3
+    },
+    {
+      "machine_id": 2,
+      "new_status": "idle",
+      "new_utilization": 30.0
+    },
+    {
+      "machine_id": 2,
+      "new_status": "maintenance",
+      "new_utilization": 30.0
+    }
+  ]
+}
+
+C:\Users\maaem>curl --proxy "" -X POST http://127.0.0.1:5000/api/agents/supply
+{
+  "actions": [
+    {
+      "action": "reassign_job",
+      "machine_id": 3,
+      "value": 2
+    }
+  ],
+  "impact": {
+    "energy_change_percent": 0,
+    "notes": "Reassigned pending order to available machine to meet deadline and improve efficiency.",
+    "throughput_change_percent": 100
+  }
+}
